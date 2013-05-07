@@ -1,0 +1,19 @@
+﻿@model System.IO.FileInfo[]
+
+@{
+    Layout = "master.cshtml";
+    ViewBag.Title = "scripts";
+}
+<div class="title">screrve scripts</div>
+<form action="/" method="post" enctype="multipart/form-data">
+    <input type="file" name="FileUpload1" multiple="" />
+    <input type="submit" name="Upload" id="Submit" value="Upload" />
+</form>
+<div class="left">
+    @foreach(var file in Model) { 
+        @{var name = file.Name.Replace(".js", "");}
+        <div id="@name" class="filename">
+            <a href="#" onclick="javascript:$.ajax({type:'DELETE', url:'?Remove=@name', success:function(){$('#@name').remove();}, error:function(a,b,c){alert(c);}})">remove</a>&nbsp;&nbsp;@file.Name
+        </div>
+    }
+</div>
