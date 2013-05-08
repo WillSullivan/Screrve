@@ -9,6 +9,7 @@
     public class IndexModule : NancyModule
     {
         private const string jsExt = "*.js";
+
         public IndexModule()
         {
             Get["/"] = parameters =>
@@ -17,7 +18,8 @@
             };
             Get["scripts"] = parameters =>
             {
-                return View["scripts", GetJavascriptFiles()];
+                // can't catch in a lambda :(
+                return SafeView(() => View["scripts", GetJavascriptFiles()]);
             };
             Get["access"] = parameters =>
             {
@@ -25,9 +27,12 @@
             };
             Post["/"] = parameters =>
             {
-                var dir = GetAppDataFolder();
-                SaveNewFiles(dir);
-                return View["scripts", GetJavascriptFiles(dir)];
+                return SafeView(() =>
+                {
+                    var dir = GetAppDataFolder();
+                    SaveNewFiles(dir);
+                    return View["scripts", GetJavascriptFiles(dir)];
+                });
             };
             Delete["scripts"] = parameters =>
             {
@@ -37,9 +42,23 @@
             {
                 return Remove();
             };
-            
         }
 
+        /// <summary>
+        /// Safes the view.
+        /// </summary>
+        /// <returns></returns>
+        private object SafeView(Func<object> view)
+        {
+            try
+            {
+                return view();
+            }
+            catch(Exception ex)
+            {
+                return ex.ToString();
+            }
+        }
         private dynamic Remove()
         {
             var filename = Request.Query.Remove;
@@ -49,6 +68,7 @@
                 File.Delete(filename);
             return View["scripts", GetJavascriptFiles()];
         }
+
         private FileInfo[] GetJavascriptFiles()
         {
             return GetJavascriptFiles(GetAppDataFolder());
