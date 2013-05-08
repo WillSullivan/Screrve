@@ -3,7 +3,7 @@
     using System;
     using System.IO;
     using System.Linq;
-    using System.Web;
+    using System.Web.Hosting;
     using Nancy;
 
     public class IndexModule : NancyModule
@@ -83,7 +83,7 @@
 
         private DirectoryInfo GetAppDataFolder()
         {
-            return new DirectoryInfo(global::System.Web.HttpContext.Current.Server.MapPath("~/App_Data"));
+            return new DirectoryInfo(HostingEnvironment.MapPath("~/App_Data"));
         }
 
         private void SaveNewFiles(DirectoryInfo dir)
