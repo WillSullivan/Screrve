@@ -9,6 +9,7 @@
     public class IndexModule : NancyModule
     {
         private const string jsExt = "*.js";
+        private static readonly FileStorage _store = new FileStorage();
 
         public IndexModule()
         {
@@ -29,9 +30,8 @@
             {
                 return SafeView(() =>
                 {
-                    var dir = GetAppDataFolder();
-                    SaveNewFiles(dir);
-                    return View["scripts", GetJavascriptFiles(dir)];
+                    _store.AddFiles(Context.Request.Files.Where(x => x.Name.EndsWith(".js")));
+                    return View["scripts", GetJavascriptFiles()];
                 });
             };
             Delete["scripts"] = parameters =>
@@ -62,40 +62,13 @@
         private dynamic Remove()
         {
             var filename = Request.Query.Remove;
-            var dir = GetAppDataFolder();
-            filename = Path.Combine(dir.FullName, Path.ChangeExtension(filename, "js"));
-            if(File.Exists(filename))
-                File.Delete(filename);
+            _store.RemoveFile(filename);
             return View["scripts", GetJavascriptFiles()];
         }
 
-        private FileInfo[] GetJavascriptFiles()
+        private FileDescription[] GetJavascriptFiles()
         {
-            return GetJavascriptFiles(GetAppDataFolder());
-        }
-
-        private FileInfo[] GetJavascriptFiles(DirectoryInfo dir)
-        {
-            FileInfo[] resultingFiles;
-            resultingFiles = dir.EnumerateFiles(jsExt).ToArray();
-            return resultingFiles;
-        }
-
-        private DirectoryInfo GetAppDataFolder()
-        {
-            return new DirectoryInfo(HostingEnvironment.MapPath("~/App_Data"));
-        }
-
-        private void SaveNewFiles(DirectoryInfo dir)
-        {
-            if(!this.Context.Request.Files.Any())
-                return;
-
-            var existingFiles = dir.EnumerateFiles(jsExt);
-            var files = Context.Request.Files.Where(x => x.Name.EndsWith(".js") && !existingFiles.Any(y => y.Name.Equals(x.Name, StringComparison.CurrentCultureIgnoreCase)));
-            foreach(var file in files)
-                using(var stream = File.OpenWrite(Path.Combine(dir.FullName, file.Name)))
-                    file.Value.CopyTo(stream);
+            return _store.GetFiles().ToArray();
         }
     }
 }
